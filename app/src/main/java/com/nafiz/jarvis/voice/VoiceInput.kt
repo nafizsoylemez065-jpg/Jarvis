@@ -38,7 +38,6 @@ class VoiceInput(private val activity: Activity) {
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
-            override fun onVolumeChanged(volume: Int) {}
 
             override fun onPartialResults(partialResults: Bundle?) {
                 val text = partialResults
