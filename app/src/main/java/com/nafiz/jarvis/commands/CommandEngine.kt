@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.BatteryManager
-import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import com.nafiz.jarvis.data.NotesStore
@@ -69,14 +68,14 @@ class CommandEngine(private val context: Context) {
         val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val current = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
 
-        val value: Int? = when {
+        val value: Int = when {
             has(input, "kapat", "sustur", "sessiz") -> 0
             has(input, "tam", "full", "maksimum", "en yükseğe", "en yuksege") -> max
             has(input, "yükselt", "yukselt", "artır", "artir") -> (current + max / 5).coerceAtMost(max)
             has(input, "alçalt", "alcalt", "azalt", "kıs", "kis") -> (current - max / 5).coerceAtLeast(0)
             has(input, "aç", "ac") && current == 0 -> max / 2
-            else -> percentIn(input)?.let { (it * max) / 100 }
-        } ?: return null
+            else -> percentIn(input)?.let { (it * max) / 100 } ?: return null
+        }
 
         val changed = runCatching {
             audio.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0)
@@ -148,7 +147,7 @@ class CommandEngine(private val context: Context) {
             has(input, "saniye") -> number
             else -> number * 60
         }
-        val ok = Intents.setTimer(context, seconds, "Jarvis zamanlayıcı")
+        val ok = Intents.setTimer(context, seconds)
         return CommandResult(ok, if (ok) "Zamanlayıcı kuruldu" else "Zamanlayıcıyı kuramadım")
     }
 
@@ -186,12 +185,7 @@ class CommandEngine(private val context: Context) {
             )
         }
         if (has(input, "bluetooth", "blue tooth")) {
-            val action = if (Build.VERSION.SDK_INT >= 31) {
-                Settings.Panel.ACTION_BLUETOOTH
-            } else {
-                Settings.ACTION_BLUETOOTH_SETTINGS
-            }
-            val ok = Intents.openSettings(context, action)
+            val ok = Intents.openSettings(context, Settings.ACTION_BLUETOOTH_SETTINGS)
             return CommandResult(ok, if (ok) "Bluetooth panelini açtım" else "Bluetooth ayarlarını açamadım")
         }
         return null
