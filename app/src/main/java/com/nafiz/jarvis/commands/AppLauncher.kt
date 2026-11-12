@@ -85,15 +85,12 @@ object Intents {
         true
     }.getOrDefault(false)
 
-    fun setTimer(context: Context, seconds: Int, label: String?): Boolean = runCatching {
+    fun setTimer(context: Context, seconds: Int): Boolean = runCatching {
         context.startActivity(
             newTask(
                 Intent(android.provider.AlarmClock.ACTION_SET_TIMER).apply {
                     putExtra(android.provider.AlarmClock.EXTRA_LENGTH, seconds)
                     putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, true)
-                    if (!label.isNullOrBlank()) {
-                        putExtra(android.provider.AlarmClock.EXTRA_DESCRIPTION, label)
-                    }
                 }
             )
         )
