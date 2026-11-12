@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.nafiz.jarvis.data.SettingsStore
+import com.nafiz.jarvis.ui.theme.JarvisCyan
 import com.nafiz.jarvis.ui.theme.JarvisSurface
 
 @Composable
