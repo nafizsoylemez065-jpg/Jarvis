@@ -62,9 +62,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         isThinking = true
         viewModelScope.launch {
             val reply = withContext(Dispatchers.IO) { llm.chat(messages.toList()) }
-                ?: "Sohbet modu için bir yapay zeka API anahtarı gerekiyor. " +
-                    "Ayarlar sekmesinden girebilirsin. Komutlarım ise zaten çalışıyor — " +
-                    "Komutlar sekmesinden neler yapabildiğime bakabilirsin."
+                ?: ("Sohbet modu yanıt veremedi. Sebep: " + (llm.lastError ?: "bilinmiyor") +
+                    "\n\nKomutlarım ise çalışmaya devam ediyor — Komutlar sekmesine bakabilirsin.")
             append(ChatMessage(role = Role.ASSISTANT, text = reply))
             if (settings.speakReplies) tts.speak(reply)
             isThinking = false
