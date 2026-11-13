@@ -27,11 +27,16 @@ class SettingsStore(context: Context) {
         get() = prefs.getBoolean(KEY_SPEAK, true)
         set(value) = prefs.edit().putBoolean(KEY_SPEAK, value).apply()
 
+    var ultronMode: Boolean
+        get() = prefs.getBoolean(KEY_ULTRON, false)
+        set(value) = prefs.edit().putBoolean(KEY_ULTRON, value).apply()
+
     private companion object {
         const val KEY_BASE_URL = "base_url"
         const val KEY_API_KEY = "api_key"
         const val KEY_MODEL = "model"
         const val KEY_SPEAK = "speak_replies"
+        const val KEY_ULTRON = "ultron_mode"
     }
 }
 
