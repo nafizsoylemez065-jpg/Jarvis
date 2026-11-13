@@ -10,9 +10,16 @@ import java.net.URL
 
 class LlmClient(private val settings: SettingsStore) {
 
+    var lastError: String? = null
+        private set
+
     fun chat(history: List<ChatMessage>): String? {
+        lastError = null
         val key = settings.apiKey.trim()
-        if (key.isEmpty()) return null
+        if (key.isEmpty()) {
+            lastError = "API anahtarı boş — Ayarlar sekmesinden gir"
+            return null
+        }
         return runCatching {
             val connection = URL(settings.baseUrl.trimEnd('/') + "/chat/completions")
                 .openConnection() as HttpURLConnection
@@ -46,7 +53,10 @@ class LlmClient(private val settings: SettingsStore) {
             val stream = if (code in 200..299) connection.inputStream else connection.errorStream
             val body = stream?.bufferedReader()?.readText().orEmpty()
             connection.disconnect()
-            if (code !in 200..299) return@runCatching null
+            if (code !in 200..299) {
+                lastError = "API hatası (kod $code): " + body.take(300)
+                return@runCatching null
+            }
 
             JSONObject(body)
                 .getJSONArray("choices")
@@ -55,6 +65,8 @@ class LlmClient(private val settings: SettingsStore) {
                 .getString("content")
                 .trim()
                 .takeIf { it.isNotEmpty() }
+        }.onFailure {
+            lastError = "Bağlantı/okuma hatası: ${it.message}"
         }.getOrNull()
     }
 
