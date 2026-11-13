@@ -20,55 +20,68 @@ class LlmClient(private val settings: SettingsStore) {
             lastError = "API anahtarı boş — Ayarlar sekmesinden gir"
             return null
         }
-        return runCatching {
-            val connection = URL(settings.baseUrl.trimEnd('/') + "/chat/completions")
-                .openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.connectTimeout = 15_000
-            connection.readTimeout = 60_000
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Authorization", "Bearer $key")
-
-            val payload = JSONObject().apply {
-                put("model", settings.model.trim())
-                put("temperature", 0.7)
-                put("max_tokens", 500)
-                put("messages", JSONArray().apply {
-                    put(JSONObject().put("role", "system").put("content", SYSTEM_PROMPT))
-                    history.takeLast(12).forEach { m ->
-                        put(
-                            JSONObject()
-                                .put("role", if (m.role == Role.USER) "user" else "assistant")
-                                .put("content", m.text)
-                        )
-                    }
-                })
+        repeat(3) { attempt ->
+            if (attempt > 0) {
+                runCatching { Thread.sleep(2000L * attempt) }
+                lastError = null
             }
-
-            connection.outputStream.use {
-                it.write(payload.toString().toByteArray(Charsets.UTF_8))
-            }
-            val code = connection.responseCode
-            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-            val body = stream?.bufferedReader()?.readText().orEmpty()
-            connection.disconnect()
-            if (code !in 200..299) {
-                lastError = "API hatası (kod $code): " + body.take(300)
-                return@runCatching null
-            }
-
-            JSONObject(body)
-                .getJSONArray("choices")
-                .getJSONObject(0)
-                .getJSONObject("message")
-                .getString("content")
-                .trim()
-                .takeIf { it.isNotEmpty() }
-        }.onFailure {
-            lastError = "Bağlantı/okuma hatası: ${it.message}"
-        }.getOrNull()
+            val reply = execute(history, key)
+            if (reply != null) return reply
+            val retryable = lastError?.contains("(kod 503)") == true ||
+                lastError?.contains("(kod 429)") == true
+            if (!retryable) return null
+        }
+        return null
     }
+
+    private fun execute(history: List<ChatMessage>, key: String): String? = runCatching {
+        val connection = URL(settings.baseUrl.trimEnd('/') + "/chat/completions")
+            .openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 60_000
+        connection.doOutput = true
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.setRequestProperty("Authorization", "Bearer $key")
+
+        val payload = JSONObject().apply {
+            put("model", settings.model.trim())
+            put("temperature", 0.7)
+            put("max_tokens", 500)
+            put("messages", JSONArray().apply {
+                put(JSONObject().put("role", "system").put("content", SYSTEM_PROMPT))
+                history.takeLast(12).forEach { m ->
+                    put(
+                        JSONObject()
+                            .put("role", if (m.role == Role.USER) "user" else "assistant")
+                            .put("content", m.text)
+                    )
+                }
+            })
+        }
+
+        connection.outputStream.use {
+            it.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        val code = connection.responseCode
+        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+        val body = stream?.bufferedReader()?.readText().orEmpty()
+        connection.disconnect()
+        if (code !in 200..299) {
+            lastError = "API hatası (kod $code): " + body.take(300)
+            return@runCatching null
+        }
+
+        JSONObject(body)
+            .getJSONArray("choices")
+            .getJSONObject(0)
+            .getJSONObject("message")
+            .getString("content")
+            .trim()
+            .takeIf { it.isNotEmpty() }
+    }.onFailure {
+        lastError = "Bağlantı/okuma hatası: ${it.message}"
+    }.getOrNull()
 
     private companion object {
         const val SYSTEM_PROMPT =
