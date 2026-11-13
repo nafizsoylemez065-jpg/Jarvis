@@ -15,7 +15,7 @@ class LlmClient(private val settings: SettingsStore) {
 
     fun chat(history: List<ChatMessage>): String? {
         lastError = null
-        val key = settings.apiKey.trim()
+        val key = settings.apiKey.trim().replace(Regex("\\s"), "")
         if (key.isEmpty()) {
             lastError = "API anahtarı boş — Ayarlar sekmesinden gir"
             return null
@@ -35,7 +35,8 @@ class LlmClient(private val settings: SettingsStore) {
     }
 
     private fun execute(history: List<ChatMessage>, key: String): String? = runCatching {
-        val connection = URL(settings.baseUrl.trimEnd('/') + "/chat/completions")
+        val urlStr = settings.baseUrl.trim().replace(Regex("\\s"), "")
+        val connection = URL(urlStr + "/chat/completions")
             .openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.connectTimeout = 15_000
@@ -45,7 +46,7 @@ class LlmClient(private val settings: SettingsStore) {
         connection.setRequestProperty("Authorization", "Bearer $key")
 
         val payload = JSONObject().apply {
-            put("model", settings.model.trim())
+            put("model", settings.model.trim().replace(Regex("\\s"), ""))
             put("temperature", 0.7)
             put("max_tokens", 500)
             put("messages", JSONArray().apply {
