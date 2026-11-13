@@ -41,6 +41,7 @@ fun SettingsScreen() {
     var apiKey by remember { mutableStateOf(settings.apiKey) }
     var model by remember { mutableStateOf(settings.model) }
     var speakReplies by remember { mutableStateOf(settings.speakReplies) }
+    var ultronMode by remember { mutableStateOf(settings.ultronMode) }
 
     Column(
         modifier = Modifier
@@ -91,6 +92,21 @@ fun SettingsScreen() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Column(Modifier.weight(1f)) {
+                Text("😈 Ultron Modu", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Fikirlerini sorgular, meydan okur — ama komutları paşa gibi yapar",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Switch(checked = ultronMode, onCheckedChange = { ultronMode = it })
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text("Yanıtları sesli oku", style = MaterialTheme.typography.bodyLarge)
             Switch(checked = speakReplies, onCheckedChange = { speakReplies = it })
         }
@@ -101,6 +117,7 @@ fun SettingsScreen() {
                 settings.apiKey = apiKey.trim()
                 settings.model = model.trim()
                 settings.speakReplies = speakReplies
+                settings.ultronMode = ultronMode
                 Toast.makeText(context, "Ayarlar kaydedildi", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth()
