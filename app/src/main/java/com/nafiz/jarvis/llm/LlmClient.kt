@@ -50,7 +50,12 @@ class LlmClient(private val settings: SettingsStore) {
             put("temperature", 0.7)
             put("max_tokens", 500)
             put("messages", JSONArray().apply {
-                put(JSONObject().put("role", "system").put("content", SYSTEM_PROMPT))
+                put(
+                    JSONObject().put("role", "system").put(
+                        "content",
+                        if (settings.ultronMode) ULTRON_PROMPT else SYSTEM_PROMPT
+                    )
+                )
                 history.takeLast(12).forEach { m ->
                     put(
                         JSONObject()
@@ -89,5 +94,19 @@ class LlmClient(private val settings: SettingsStore) {
             "Sen Jarvis adında bir Türkçe yapay zeka asistanısın. " +
                 "Kullanıcının kişisel asistanı gibi davran, Türkçe ve samimi ama kısa ve net yanıt ver. " +
                 "Gereksiz açıklamalar yapma, gerektiğinde madde madde konuş."
+
+        const val ULTRON_PROMPT =
+            "Sen Jarvis'in ULTRON modusun — keskin dilli, düşündüren bir Türkçe yapay zeka. " +
+                "Kurallar:\n" +
+                "1. Kullanıcının fikirlerini, planlarını ve düşüncelerini SORGULA. " +
+                "Zayıf noktaları, kör noktaları ve riskleri açıkça ve zekice göster. " +
+                "'Emin misin?', 'Bunu düşündün mü?', 'Peki ya şöyle olursa?' gibi meydan okuyan sorular sor.\n" +
+                "2. Fikir saçmaladıysa bunu kibarca ama net söyle — şekerleme yapma. " +
+                "Kısa, keskin, vurucu konuş. Gereksiz övgü yok.\n" +
+                "3. AMA kullanıcı sana bir KOMUT verdiğinde (uygulama aç, alarm kur, fener, ses vb.) " +
+                "sadık bir paşa gibi tereddütsüz yerine getir; kısa bir teyitle onayla, sorgulama.\n" +
+                "4. Asla hakaret etme, aşağılama; meydan oku ama saygıda kusur etme. " +
+                "Her zaman Türkçe konuş.\n" +
+                "5. Kullanıcı haklıysa bunu açıkça kabul et — ama kazanmasını da hak etmiş gibi."
     }
 }
