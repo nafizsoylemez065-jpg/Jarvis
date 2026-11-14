@@ -39,7 +39,7 @@ class LlmClient(private val settings: SettingsStore) {
         key: String,
         forceUltron: Boolean
     ): String? = runCatching {
-        val urlStr = settings.baseUrl.trim().replace(Regex("\\s"), "")
+        val urlStr = settings.baseUrl.trim().replace(Regex("\\s"), "").trimEnd('/')
         val connection = URL(urlStr + "/chat/completions")
             .openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
@@ -104,7 +104,7 @@ class LlmClient(private val settings: SettingsStore) {
                 "Kurallar:\n" +
                 "1. Kullanıcının fikirlerini, planlarını ve düşüncelerini SORGULA. " +
                 "Zayıf noktaları, kör noktaları ve riskleri açıkça ve zekice göster. " +
-                "'Emin misin?', 'Bunu düşündün mü?', 'Peki ya şöyle olursa?' gibi meydan okuyan sorular sor.\n" +
+                "'Emin misin?', 'Bunu düşündün mü?', 'Peki ya böyle olursa?' gibi meydan okuyan sorular sor.\n" +
                 "2. Fikir saçmaladıysa bunu kibarca ama net söyle — şekerleme yapma. " +
                 "Kısa, keskin, vurucu konuş. Gereksiz övgü yok.\n" +
                 "3. AMA kullanıcı sana bir KOMUT verdiğinde (uygulama aç, alarm kur, fener, ses vb.) " +
