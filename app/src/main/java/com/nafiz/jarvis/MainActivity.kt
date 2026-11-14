@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -34,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nafiz.jarvis.ui.ChatScreen
 import com.nafiz.jarvis.ui.CommandsScreen
 import com.nafiz.jarvis.ui.SettingsScreen
+import com.nafiz.jarvis.ui.UltronScreen
 import com.nafiz.jarvis.ui.theme.JarvisDark
 import com.nafiz.jarvis.ui.theme.JarvisSurface
 import com.nafiz.jarvis.ui.theme.JarvisTheme
@@ -126,6 +128,12 @@ fun JarvisApp(viewModel: ChatViewModel = viewModel()) {
                     icon = { Icon(Icons.Filled.Settings, contentDescription = "Ayarlar") },
                     label = { Text("Ayarlar") }
                 )
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = { Icon(Icons.Filled.Whatshot, contentDescription = "Ultron") },
+                    label = { Text("Ultron") }
+                )
             }
         }
     ) { padding ->
@@ -139,6 +147,7 @@ fun JarvisApp(viewModel: ChatViewModel = viewModel()) {
                 )
                 1 -> CommandsScreen()
                 2 -> SettingsScreen()
+                3 -> UltronScreen()
             }
         }
     }
