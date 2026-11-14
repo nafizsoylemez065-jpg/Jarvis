@@ -40,9 +40,9 @@ class SettingsStore(context: Context) {
     }
 }
 
-class ChatHistoryStore(context: Context) {
+class ChatHistoryStore(context: Context, prefsName: String = "jarvis_history") {
 
-    private val prefs = context.getSharedPreferences("jarvis_history", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
     fun load(): List<ChatMessage> = runCatching {
         val array = JSONArray(prefs.getString(KEY_MESSAGES, "[]") ?: "[]")
