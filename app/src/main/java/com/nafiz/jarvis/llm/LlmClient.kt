@@ -13,7 +13,7 @@ class LlmClient(private val settings: SettingsStore) {
     var lastError: String? = null
         private set
 
-    fun chat(history: List<ChatMessage>): String? {
+    fun chat(history: List<ChatMessage>, forceUltron: Boolean = false): String? {
         lastError = null
         val key = settings.apiKey.trim().replace(Regex("\\s"), "")
         if (key.isEmpty()) {
@@ -25,7 +25,7 @@ class LlmClient(private val settings: SettingsStore) {
                 runCatching { Thread.sleep(2000L * attempt) }
                 lastError = null
             }
-            val reply = execute(history, key)
+            val reply = execute(history, key, forceUltron)
             if (reply != null) return reply
             val retryable = lastError?.contains("(kod 503)") == true ||
                 lastError?.contains("(kod 429)") == true
@@ -34,7 +34,11 @@ class LlmClient(private val settings: SettingsStore) {
         return null
     }
 
-    private fun execute(history: List<ChatMessage>, key: String): String? = runCatching {
+    private fun execute(
+        history: List<ChatMessage>,
+        key: String,
+        forceUltron: Boolean
+    ): String? = runCatching {
         val urlStr = settings.baseUrl.trim().replace(Regex("\\s"), "")
         val connection = URL(urlStr + "/chat/completions")
             .openConnection() as HttpURLConnection
@@ -53,7 +57,7 @@ class LlmClient(private val settings: SettingsStore) {
                 put(
                     JSONObject().put("role", "system").put(
                         "content",
-                        if (settings.ultronMode) ULTRON_PROMPT else SYSTEM_PROMPT
+                        if (forceUltron || settings.ultronMode) ULTRON_PROMPT else SYSTEM_PROMPT
                     )
                 )
                 history.takeLast(12).forEach { m ->
