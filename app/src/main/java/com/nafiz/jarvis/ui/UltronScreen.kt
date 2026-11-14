@@ -60,6 +60,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+val UltronRed = Color(0xFFEF4444)
+val UltronOrange = Color(0xFFF97316)
+
 @Composable
 fun UltronScreen() {
     val context = LocalContext.current
