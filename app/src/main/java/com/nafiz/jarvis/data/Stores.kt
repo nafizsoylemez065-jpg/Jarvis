@@ -12,16 +12,22 @@ class SettingsStore(context: Context) {
     private val prefs = context.getSharedPreferences("jarvis_settings", Context.MODE_PRIVATE)
 
     var baseUrl: String
-        get() = prefs.getString(KEY_BASE_URL, "https://api.mistral.ai/v1") ?: "https://api.mistral.ai/v1"
-        set(value) = prefs.edit().putString(KEY_BASE_URL, value).apply()
+        get() {
+            val stored = prefs.getString(KEY_BASE_URL, "") ?: ""
+            return if (stored.isBlank() || stored.contains("api.mistral.ai")) DEFAULT_BASE_URL else stored
+        }
+        set(value) = prefs.edit().putString(KEY_BASE_URL, value.trim()).apply()
 
     var apiKey: String
         get() = prefs.getString(KEY_API_KEY, "") ?: ""
         set(value) = prefs.edit().putString(KEY_API_KEY, value).apply()
 
     var model: String
-        get() = prefs.getString(KEY_MODEL, "mistral-small-latest") ?: "mistral-small-latest"
-        set(value) = prefs.edit().putString(KEY_MODEL, value).apply()
+        get() {
+            val stored = prefs.getString(KEY_MODEL, "") ?: ""
+            return if (stored.isBlank() || stored == "mistral-small-latest") DEFAULT_MODEL else stored
+        }
+        set(value) = prefs.edit().putString(KEY_MODEL, value.trim()).apply()
 
     var speakReplies: Boolean
         get() = prefs.getBoolean(KEY_SPEAK, true)
@@ -37,6 +43,9 @@ class SettingsStore(context: Context) {
         const val KEY_MODEL = "model"
         const val KEY_SPEAK = "speak_replies"
         const val KEY_ULTRON = "ultron_mode"
+
+        const val DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+        const val DEFAULT_MODEL = "gemini-flash-lite-latest"
     }
 }
 
