@@ -35,8 +35,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,31 +46,64 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.nafiz.jarvis.ChatViewModel
+import com.nafiz.jarvis.commands.CommandEngine
+import com.nafiz.jarvis.data.ChatHistoryStore
+import com.nafiz.jarvis.data.ChatMessage
+import com.nafiz.jarvis.data.Role
+import com.nafiz.jarvis.data.SettingsStore
+import com.nafiz.jarvis.llm.LlmClient
 import com.nafiz.jarvis.ui.theme.JarvisDark
 import com.nafiz.jarvis.ui.theme.JarvisTextDim
+import com.nafiz.jarvis.voice.TtsManager
 import com.nafiz.jarvis.voice.VoiceInput
-
-val UltronRed = Color(0xFFEF4444)
-val UltronOrange = Color(0xFFF97316)
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun UltronScreen() {
     val context = LocalContext.current
     val activity = context as? Activity
-    val app = remember { context.applicationContext as android.app.Application }
+    val app = remember { context.applicationContext }
 
-    val viewModel: ChatViewModel = viewModel(
-        key = "ultron",
-        initializer = { ChatViewModel(app, ultron = true) }
-    )
+    val settings = remember { SettingsStore(app) }
+    val llm = remember { LlmClient(settings) }
+    val history = remember { ChatHistoryStore(app, "jarvis_ultron_history") }
+    val tts = remember { TtsManager(app) }
+    val engine = remember { CommandEngine(app) }
+    val scope = rememberCoroutineScope()
 
+    val messages = remember { mutableStateListOf<ChatMessage>() }
+    var isThinking by remember { mutableStateOf(false) }
     var listening by remember { mutableStateOf(false) }
     var partialText by remember { mutableStateOf("") }
     var input by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+
+    DisposableEffect(Unit) {
+        if (messages.isEmpty()) {
+            messages.addAll(history.load())
+        }
+        if (messages.isEmpty()) {
+            messages.add(
+                ChatMessage(
+                    role = Role.ASSISTANT,
+                    text = "😈 Ultron aktif.\n\n" +
+                        "Burada sana şekerleme yapmam: fikirlerini sorgularım, zayıf noktalarını " +
+                        "gösteririm. Ama bir komut verirsen paşa gibi yaparım.\n\n" +
+                        "Hadi, bana en büyük fikrini anlat."
+                )
+            )
+            history.save(messages)
+        }
+        onDispose { tts.shutdown() }
+    }
+
+    LaunchedEffect(messages.size, isThinking) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -84,9 +119,32 @@ fun UltronScreen() {
         onDispose { voiceInput?.destroy() }
     }
 
-    LaunchedEffect(viewModel.messages.size, viewModel.isThinking) {
-        if (viewModel.messages.isNotEmpty()) {
-            listState.animateScrollToItem(viewModel.messages.size - 1)
+    fun send(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty() || isThinking) return
+
+        messages.add(ChatMessage(role = Role.USER, text = trimmed))
+        history.save(messages)
+
+        val command = runCatching { engine.tryExecute(trimmed) }.getOrNull()
+        if (command != null) {
+            messages.add(
+                ChatMessage(role = Role.ASSISTANT, text = command.speech, isCommand = true)
+            )
+            history.save(messages)
+            if (command.ok) tts.speak(command.speech, deepVoice = true)
+            return
+        }
+
+        isThinking = true
+        scope.launch {
+            val reply = withContext(Dispatchers.IO) {
+                llm.chat(messages.toList(), forceUltron = true)
+            } ?: ("Sohbet modu yanıt veremedi. Sebep: " + (llm.lastError ?: "bilinmiyor"))
+            messages.add(ChatMessage(role = Role.ASSISTANT, text = reply))
+            history.save(messages)
+            if (settings.speakReplies) tts.speak(reply, deepVoice = true)
+            isThinking = false
         }
     }
 
@@ -111,7 +169,7 @@ fun UltronScreen() {
             onFinal = {
                 listening = false
                 partialText = ""
-                viewModel.send(it)
+                send(it)
             },
             onError = {
                 listening = false
@@ -133,14 +191,14 @@ fun UltronScreen() {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            JarvisOrb(pulsing = listening || viewModel.isThinking)
+            JarvisOrb(pulsing = listening || isThinking)
             Spacer(Modifier.size(12.dp))
             Column {
                 Text("ULTRON 😈", style = MaterialTheme.typography.titleMedium, color = UltronRed)
                 Text(
                     text = when {
                         listening -> "Dinliyorum..."
-                        viewModel.isThinking -> "Fikrini sorguluyorum..."
+                        isThinking -> "Fikrini sorguluyorum..."
                         else -> "Meydan okumaya hazır"
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -157,10 +215,10 @@ fun UltronScreen() {
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(viewModel.messages) { message ->
+            items(messages) { message ->
                 MessageBubble(message)
             }
-            if (viewModel.isThinking) {
+            if (isThinking) {
                 item {
                     Text(
                         "Ultron düşünüyor…",
@@ -216,7 +274,7 @@ fun UltronScreen() {
             IconButton(
                 onClick = {
                     if (input.isNotBlank()) {
-                        viewModel.send(input)
+                        send(input)
                         input = ""
                     }
                 },
