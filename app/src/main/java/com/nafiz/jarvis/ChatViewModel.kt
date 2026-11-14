@@ -19,16 +19,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ChatViewModel(
-    application: Application,
-    private val ultron: Boolean = false
+    application: Application
 ) : AndroidViewModel(application) {
 
     private val settings = SettingsStore(application)
     private val llm = LlmClient(settings)
-    private val history = ChatHistoryStore(
-        application,
-        if (ultron) "jarvis_ultron_history" else "jarvis_history"
-    )
+    private val history = ChatHistoryStore(application, "jarvis_history")
     private val tts = TtsManager(application)
     private val engine by lazy { CommandEngine(application) }
 
@@ -42,17 +38,10 @@ class ChatViewModel(
             messages.add(
                 ChatMessage(
                     role = Role.ASSISTANT,
-                    text = if (ultron) {
-                        "😈 Ultron aktif.\n\n" +
-                            "Burada sana şekerleme yapmam: fikirlerini sorgularım, zayıf noktalarını " +
-                            "gösteririm. Ama bir komut verirsen paşa gibi yaparım.\n\n" +
-                            "Hadi, bana en büyük fikrini anlat."
-                    } else {
-                        "Merhaba, ben Jarvis. 🤖\n\n" +
-                            "Bana sesli ya da yazılı komut verebilirsin: \"feneri aç\", \"YouTube'u aç\", " +
-                            "\"alarm kur 07:30\", \"batarya yüzde kaç\"...\n\n" +
-                            "Serbest sohbet için Ayarlar sekmesinden API anahtarı girebilirsin."
-                    }
+                    text = "Merhaba, ben Jarvis. 🤖\n\n" +
+                        "Bana sesli ya da yazılı komut verebilirsin: \"feneri aç\", \"YouTube'u aç\", " +
+                        "\"alarm kur 07:30\", \"batarya yüzde kaç\"...\n\n" +
+                        "Serbest sohbet için Ayarlar sekmesinden API anahtarı girebilirsin."
                 )
             )
             history.save(messages)
@@ -68,19 +57,19 @@ class ChatViewModel(
         val command = runCatching { engine.tryExecute(trimmed) }.getOrNull()
         if (command != null) {
             append(ChatMessage(role = Role.ASSISTANT, text = command.speech, isCommand = true))
-            if (command.ok) tts.speak(command.speech, deepVoice = ultron)
+            if (command.ok) tts.speak(command.speech)
             return
         }
 
         isThinking = true
         viewModelScope.launch {
             val reply = withContext(Dispatchers.IO) {
-                llm.chat(messages.toList(), forceUltron = ultron)
+                llm.chat(messages.toList())
             }
                 ?: ("Sohbet modu yanıt veremedi. Sebep: " + (llm.lastError ?: "bilinmiyor") +
                     "\n\nKomutlarım ise çalışmaya devam ediyor — Komutlar sekmesine bakabilirsin.")
             append(ChatMessage(role = Role.ASSISTANT, text = reply))
-            if (settings.speakReplies) tts.speak(reply, deepVoice = ultron)
+            if (settings.speakReplies) tts.speak(reply)
             isThinking = false
         }
     }
