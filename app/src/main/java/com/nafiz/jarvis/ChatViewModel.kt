@@ -68,7 +68,7 @@ class ChatViewModel(
         val command = runCatching { engine.tryExecute(trimmed) }.getOrNull()
         if (command != null) {
             append(ChatMessage(role = Role.ASSISTANT, text = command.speech, isCommand = true))
-            if (command.ok) tts.speak(command.speech)
+            if (command.ok) tts.speak(command.speech, deepVoice = ultron)
             return
         }
 
@@ -80,7 +80,7 @@ class ChatViewModel(
                 ?: ("Sohbet modu yanıt veremedi. Sebep: " + (llm.lastError ?: "bilinmiyor") +
                     "\n\nKomutlarım ise çalışmaya devam ediyor — Komutlar sekmesine bakabilirsin.")
             append(ChatMessage(role = Role.ASSISTANT, text = reply))
-            if (settings.speakReplies) tts.speak(reply)
+            if (settings.speakReplies) tts.speak(reply, deepVoice = ultron)
             isThinking = false
         }
     }
