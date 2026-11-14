@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -45,6 +46,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val crashPrefs = getSharedPreferences("jarvis_crash", MODE_PRIVATE)
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching {
+                crashPrefs.edit()
+                    .putString("last_crash", Log.getStackTraceString(error).take(1200))
+                    .putLong("crash_time", System.currentTimeMillis())
+                    .apply()
+            }
+            defaultHandler?.uncaughtException(thread, error)
+        }
+
         setContent {
             JarvisTheme {
                 JarvisApp()
