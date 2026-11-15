@@ -44,20 +44,25 @@ lib/
   screens/                         Home, Yemek Ekle, Günlük Hedef
 ```
 
-## Fotoğraftan AI entegrasyonu (yol haritası)
+## Fotoğraftan AI kalori tahmini
 
-`lib/services/food_recognition_service.dart` tek entegrasyon noktasıdır. Şu an stub'tır
-(boş aday listesi döner). TensorFlow Lite yemek sınıflandırma modeli eklendiğinde
-yalnızca bu sınıfın içi doldurulur:
+`lib/services/food_recognition_service.dart` cihaz üzerinde çalışan tam bir TFLite
+çıkarım hattı içerir: görsel çözülür → 224×224'e ölçeklenir → normalize edilir →
+model çalıştırılır → softmax sonrası ilk 3 aday öneri çipi olarak gösterilir.
+Model dosyası yoksa servis sessizce boş aday listesi döner ve uygulama normal
+çalışmaya devam eder (tamamen offline).
 
-- Model (Food-101 tabanlı, quantize edilmiş, ~10 MB) `assets/models/` altına konur.
-- `recognize()` görselden ilk N aday yemeği döner; adaylar `FoodItem` listesi olarak
-  yemek ekranında öneri çipi halinde görünür.
-- Kalori modelden değil, cihazdaki `food_items` tablosundan okunur; model yalnızca
-  yemeği tanır. Bu, tahmini çok daha güvenilir kılar.
+Modeli bağlamak için:
 
-Önerilen paketler: `tflite_flutter` (cihaz içi çıkarım), opsiyonel olarak internet
-varken daha güçlü bir vision API (sonuçlar `FoodSource.cache` ile önbelleklenir).
+1. Eğitilmiş yemek sınıflandırma modelini (örn. Food-101 tabanlı, quantize,
+   ~10 MB, girdi 224×224×3) `assets/models/food_model.tflite` olarak koyun.
+2. `kFoodLabels` listesini modelinizin sınıf sırasıyla birebir aynı sırada
+   düzenleyin; her etiket Türk yemek adı ve 100 g başına kaloriyle eşlenir.
+3. `flutter pub get && flutter run` — hepsi bu; arayüz değişikliği gerekmez.
+
+Kalori modelden değil etiket tablosundan gelir; model yalnızca yemeği tanır.
+Opsiyonel olarak internet varken daha güçlü bir vision API eklenebilir
+(sonuçlar `FoodSource.cache` ile önbelleklenir).
 
 ## Yol haritası
 

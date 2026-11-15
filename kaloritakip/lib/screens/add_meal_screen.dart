@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
   void initState() {
     super.initState();
     _mealType = widget.initialMealType;
+    unawaited(_recognizer.load());
   }
 
   @override
@@ -157,6 +159,12 @@ class _AddMealScreenState extends State<AddMealScreen> {
                       onPressed: () => _applyFood(food),
                     ),
                 ],
+              ),
+            ] else if (_photoPath != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Model aday yemek bulamadı; yemeği elle girin.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
             const SizedBox(height: 16),
