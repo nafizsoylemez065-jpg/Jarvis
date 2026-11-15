@@ -8,6 +8,7 @@ import '../models/meal_entry.dart';
 import '../state/meal_store.dart';
 import 'add_meal_screen.dart';
 import 'goal_settings_screen.dart';
+import 'stats_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,15 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('KaloriTakip'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_outlined),
+            tooltip: 'İstatistik',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const StatsScreen(),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.flag_outlined),
             tooltip: 'Günlük hedef',

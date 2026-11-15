@@ -112,6 +112,17 @@ class AppDatabase {
     return rows.map(MealEntry.fromMap).toList();
   }
 
+  Future<List<MealEntry>> mealsBetween(String startDay, String endDay) async {
+    final db = await _db;
+    final rows = await db.query(
+      'meal_entries',
+      where: 'day >= ? AND day <= ?',
+      whereArgs: [startDay, endDay],
+      orderBy: 'day, id',
+    );
+    return rows.map(MealEntry.fromMap).toList();
+  }
+
   Future<int> deleteMealEntry(int id) async {
     final db = await _db;
     return db.delete('meal_entries', where: 'id = ?', whereArgs: [id]);

@@ -67,7 +67,7 @@ Opsiyonel olarak internet varken daha güçlü bir vision API eklenebilir
 ## Yol haritası
 
 - [x] MVP: manuel yemek ekleme, yerel SQLite, günlük hedef (manuel + hesaplayıcı), ana ekran
-- [ ] TFLite yemek tanıma modelinin `FoodRecognitionService` içine bağlanması
-- [ ] Haftalık/aylık istatistik grafikleri
+- [ ] Eğitilmiş model dosyasının `assets/models/food_model.tflite` olarak yerleştirilmesi
+- [x] Haftalık istatistik ekranı: 7 günlük kalori grafiği, hedef çizgisi, seri ve ortalama
 - [ ] Kullanıcının düzeltmelerinden öğrenme (fotoğraf → doğru yemek eşleşmesi)
 - [ ] Opsiyonel bulut senkron (çevrimiçi olunca kuyruktan)

@@ -6,6 +6,8 @@ import '../models/food_item.dart';
 import '../models/meal_entry.dart';
 import '../utils/date_key.dart';
 
+const int _statsWindowDays = 7;
+
 class MealStore extends ChangeNotifier {
   MealStore(this._db);
 
@@ -13,6 +15,7 @@ class MealStore extends ChangeNotifier {
 
   DailyGoal? goal;
   List<MealEntry> entries = [];
+  Map<String, int> kcalByDay = {};
 
   int get consumedKcal =>
       entries.fold(0, (sum, entry) => sum + entry.kcalTotal.round());
@@ -73,4 +76,20 @@ class MealStore extends ChangeNotifier {
       _db.searchFoods(query);
 
   Future<int> insertFood(FoodItem food) => _db.insertFood(food);
+
+  Future<void> loadStats() async {
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(days: _statsWindowDays - 1));
+    final windowEntries = await _db.mealsBetween(
+      dateKey(start),
+      dateKey(now),
+    );
+    final totals = <String, int>{};
+    for (final entry in windowEntries) {
+      totals[entry.day] =
+          (totals[entry.day] ?? 0) + entry.kcalTotal.round();
+    }
+    kcalByDay = totals;
+    notifyListeners();
+  }
 }
