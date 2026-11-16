@@ -25,7 +25,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
   final _gramsController = TextEditingController(text: '100');
   final _kcalController = TextEditingController();
   final _picker = ImagePicker();
-  final _recognizer = const FoodRecognitionService();
+  final _recognizer = FoodRecognitionService();
 
   MealType _mealType = MealType.breakfast;
   String? _photoPath;

@@ -27,7 +27,9 @@ jobs:
 
       - name: Generate platform folders
         working-directory: kaloritakip
-        run: flutter create . --project-name kaloritakip --platforms android --org com.kaloritakip
+        run: |
+          flutter create . --project-name kaloritakip --platforms android --org com.kaloritakip
+          rm -f test/widget_test.dart
 
       - name: Install dependencies
         working-directory: kaloritakip
